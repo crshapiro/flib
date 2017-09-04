@@ -265,7 +265,11 @@ if (n <= 0) then
 end if
 
 if (n == 1) then
+#ifdef __INTEL_COMPILER
+    allocate(item, source=this%pop_front())
+#else
     item = this%pop_front()
+#endif
     return
 end if
 
@@ -287,7 +291,11 @@ if (associated(node)) then
         node%next%prev => node%prev
         deallocate(node)
     else
+#ifdef __INTEL_COMPILER
+        allocate(item, source=this%pop_back())
+#else
         item = this%pop_back()
+#endif
     end if
 else
     write(*,*) "ERROR: list_t%remove index greater than list size"
