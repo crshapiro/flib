@@ -90,7 +90,6 @@ function real_s(cstar) result(r)
 implicit none
 class(*), intent(in) :: cstar
 real :: r
-integer :: i
 
 select type (cstar)
     type is (real)
