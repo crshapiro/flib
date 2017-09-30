@@ -21,6 +21,11 @@ module stl
 implicit none
 private
 
+public :: uppercase, lowercase, binary_search, count_lines
+
+! rprec is used to specify precision
+integer, parameter, public :: rprec = kind(1.d0)
+
 public :: integer_
 interface integer_
     module procedure :: integer_a
@@ -55,6 +60,7 @@ contains
 !*******************************************************************************
 function integer_s(cstar) result(i)
 !*******************************************************************************
+! convert a class(*) scalar to an integer scalar
 implicit none
 class(*), intent(in) :: cstar
 integer :: i
@@ -71,6 +77,7 @@ end function integer_s
 !*******************************************************************************
 function integer_a(cstar) result(i)
 !*******************************************************************************
+! convert a class(*) array to an integer array
 implicit none
 class(*), dimension(:), intent(in) :: cstar
 integer, dimension(:), allocatable :: i
@@ -87,6 +94,7 @@ end function integer_a
 !*******************************************************************************
 function real_s(cstar) result(r)
 !*******************************************************************************
+! convert a class(*) scalar to a real scalar
 implicit none
 class(*), intent(in) :: cstar
 real :: r
@@ -103,6 +111,7 @@ end function real_s
 !*******************************************************************************
 function real_a(cstar) result(r)
 !*******************************************************************************
+! convert a class(*) array to a real array
 implicit none
 class(*), dimension(:), intent(in) :: cstar
 real, dimension(:), allocatable :: r
@@ -119,6 +128,7 @@ end function real_a
 !*******************************************************************************
 function character_a(cstar) result(ch)
 !*******************************************************************************
+! convert a class(*) array to a character array
 implicit none
 class(*), intent(in) :: cstar
 character(:), allocatable :: ch
@@ -135,6 +145,7 @@ end function character_a
 !*******************************************************************************
 function logical_s(cstar) result(l)
 !*******************************************************************************
+! convert a class(*) scalar to a logical scalar
 implicit none
 class(*), intent(in) :: cstar
 logical :: l
@@ -151,6 +162,7 @@ end function logical_s
 !*******************************************************************************
 function logical_a(cstar) result(l)
 !*******************************************************************************
+! convert a class(*) array to a logical array
 implicit none
 class(*), dimension(:), intent(in) :: cstar
 logical, dimension(:), allocatable :: l
@@ -167,6 +179,7 @@ end function logical_a
 !*******************************************************************************
 function complex_s(cstar) result(l)
 !*******************************************************************************
+! convert a class(*) scalar to a complex scalar
 implicit none
 class(*), intent(in) :: cstar
 complex :: l
@@ -183,6 +196,7 @@ end function complex_s
 !*******************************************************************************
 function complex_a(cstar) result(l)
 !*******************************************************************************
+! convert a class(*) array to complex array
 implicit none
 class(*), dimension(:), intent(in) :: cstar
 complex, dimension(:), allocatable :: l
@@ -195,5 +209,168 @@ select type (cstar)
 end select
 
 end function complex_a
+
+
+!*******************************************************************************
+function uppercase(str) result(ucstr)
+!*******************************************************************************
+! convert specified string to upper case. Values inside quotation marks are
+! ignored
+character(*):: str
+character(len_trim(str)):: ucstr
+integer :: i, ilen, iav, ioffset, iqc, iquote
+
+ilen = len_trim(str)
+ioffset = iachar('A')-iachar('a')
+iquote = 0
+ucstr = str
+do i = 1, ilen
+    iav = iachar(str(i:i))
+
+    if(iquote==0 .and. (iav==34 .or.iav==39)) then
+        iquote = 1
+        iqc = iav
+        cycle
+    end if
+
+    if(iquote==1 .and. iav==iqc) then
+        iquote = 0
+        cycle
+    end if
+
+    if (iquote==1) cycle
+
+    if(iav >= iachar('a') .and. iav <= iachar('z')) then
+        ucstr(i:i) = achar(iav+ioffset)
+    else
+        ucstr(i:i) = str(i:i)
+    end if
+end do
+
+end function uppercase
+
+!*******************************************************************************
+function lowercase(str) result(lcstr)
+!*******************************************************************************
+! Cconvert specified string to lower case. Values inside quotation marks are
+! ignored
+character(*):: str
+character(len_trim(str)):: lcstr
+integer :: i, ilen, iav, ioffset, iqc, iquote
+
+ilen = len_trim(str)
+ioffset = iachar('A')-iachar('a')
+iquote = 0
+lcstr = str
+do i = 1, ilen
+    iav = iachar(str(i:i))
+
+    if(iquote==0 .and. (iav==34 .or.iav==39)) then
+        iquote = 1
+        iqc = iav
+        cycle
+    end if
+
+    if(iquote==1 .and. iav==iqc) then
+        iquote = 0
+        cycle
+    end if
+
+    if (iquote==1) cycle
+
+    if(iav >= iachar('A') .and. iav <= iachar('Z')) then
+        lcstr(i:i) = achar(iav-ioffset)
+    else
+        lcstr(i:i) = str(i:i)
+    end if
+end do
+
+end function lowercase
+
+
+!*******************************************************************************
+function binary_search(arr, val) result(low)
+!*******************************************************************************
+! Perform a binary search on a sorted array. Given the  provided value,
+! adjacent low and high indices of the array are found
+! such that the provided value is bracketed. Guaranteed log2(N) search.
+!
+!  Inputs:
+!  arr          - sorted array of values to search
+!  val          - value to be bracketed
+!
+!  Output:
+!  low          - lower index of the array bracket
+!                 0 if val < arr(1), N if val < arr(N))
+!
+implicit none
+
+real(rprec), dimension(:) :: arr
+real(rprec) :: val
+integer :: low, mid, high, N
+
+! Size of array
+N = size(arr)
+
+! Check if value is outside bounds
+if ( val < arr(1) ) then
+    low = 0
+    return
+end if
+if ( val > arr(N) ) then
+    low = N
+    return
+end if
+
+! Otherwise perform bisection
+low = 1
+high = N
+do while (high - low > 1)
+    mid = (low + high) / 2
+    if ( arr(mid) > val ) then
+        high = mid
+    elseif ( arr(mid) < val ) then
+        low = mid
+    else
+        low = mid
+        return
+    endif
+end do
+
+end function binary_search
+
+
+!*******************************************************************************
+function count_lines(fname) result(N)
+!*******************************************************************************
+! Counts the number of lines in a file
+implicit none
+character(*), intent(in) :: fname
+logical :: exst
+integer :: fid, ios
+integer :: N
+
+! Check if file exists and open
+inquire (file=fname, exist=exst)
+if (exst) then
+    open(newunit=fid, file=fname, position='rewind', form='formatted')
+else
+    write(*,*) "ERROR: count_lines: file " // trim(fname) // " does not exist"
+    stop 9
+end if
+
+! count number of lines and close
+ios = 0
+N = 0
+do
+    read(fid, *, IOstat = ios)
+    if (ios /= 0) exit
+    N = N + 1
+end do
+
+! Close file
+close(fid)
+
+end function count_lines
 
 end module stl
