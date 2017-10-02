@@ -25,6 +25,8 @@ public :: uppercase, lowercase, binary_search, count_lines
 
 ! rprec is used to specify precision
 integer, parameter, public :: rprec = kind(1.d0)
+! pi 3.14159.....
+real(rprec), parameter, public :: pi = 4._rprec*datan(1._rprec)
 
 public :: integer_
 interface integer_
