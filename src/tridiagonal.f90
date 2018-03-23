@@ -60,7 +60,7 @@ this%N = size(i_a)
 
 ! Check that all input arguments are the same size
 if ( size(i_b) /= this%N .or. size(i_c) /= this%N ) then
-    write(*,*) "ERROR: tridiagonal_t/constructor: " //                         &
+    write(*,*) "ERROR: tridiagonal_t%constructor: " //                         &
         "a, b, and c must be the same size"
     stop 9
 end if
@@ -80,7 +80,7 @@ this%c = i_c
 ! Check diagonal for zeros
 do i = 1, this%N
     if (this%b(i) == 0._rprec) then
-        write(*,*) "ERROR: tridiagonal_t/constructor: " //                    &
+        write(*,*) "ERROR: tridiagonal_t%constructor: " //                    &
             "found zero element along diagonal on row ",  i
         stop 9
     end if
@@ -93,7 +93,7 @@ do i = 2, this%N
     this%m(i) = this%a(i) / this%p(i-1)
     this%p(i) = this%b(i) - this%m(i) * this%c(i-1)
     if (this%p(i) == 0._rprec) then
-        write(*,*) "ERROR: tridiagonal_t/constructor: " //                     &
+        write(*,*) "ERROR: tridiagonal_t%constructor: " //                     &
             "found zero pivot on row ", i
         stop 9
     end if
@@ -113,7 +113,7 @@ integer :: i
 
 ! Check input argument size
 if ( size(d) /= this%N ) then
-    write(*,*) "ERROR: tridiagonal_t/csolve: d must the same size as the matrix"
+    write(*,*) "ERROR: tridiagonal_t%csolve: d must the same size as the matrix"
     stop 9
 end if
 
