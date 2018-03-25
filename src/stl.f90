@@ -19,14 +19,26 @@
 module stl
 !*******************************************************************************
 implicit none
-private
 
+private
 public :: uppercase, lowercase, binary_search, count_lines
 
 ! rprec is used to specify precision
 integer, parameter, public :: rprec = kind(1.d0)
 ! pi 3.14159.....
 real(rprec), parameter, public :: pi = 4._rprec*datan(1._rprec)
+
+interface linear_interp
+    module procedure :: linear_interp_ss
+    module procedure :: linear_interp_sa
+    module procedure :: linear_interp_aa
+end interface linear_interp
+
+interface bilinear_interp
+    module procedure :: bilinear_interp_ss
+    module procedure :: bilinear_interp_sa
+    module procedure :: bilinear_interp_aa
+end interface bilinear_interp
 
 public :: integer_
 interface integer_
@@ -58,6 +70,245 @@ interface complex_
 end interface complex_
 
 contains
+
+!*******************************************************************************
+real(rprec) function linear_interp_ss(u1,u2,dx,xdiff)
+!*******************************************************************************
+!
+!  This function performs linear interpolation
+!
+!  Inputs:
+!  u1           - lower bound value in the increasing index direction
+!  u2           - upper bound value in the increasing index direction
+!  dx           - length delta for the grid in the correct direction
+!  xdiff        - distance from the point of interest to the u1 node
+!
+implicit none
+
+real(rprec), intent(in) :: u1, u2, dx, xdiff
+
+linear_interp_ss = u1 + (xdiff) * (u2 - u1) / dx
+
+end function linear_interp_ss
+
+!*******************************************************************************
+function linear_interp_sa_nocheck(x, v, xq) result(vq)
+!*******************************************************************************
+!
+!  This function performs the linear interpolation for linear_interp_sa
+!  and linear_interp_aa without checking bounds of the input arrays.
+!  It cannot be called directly.
+!
+implicit none
+real(rprec), dimension(:), intent(in) :: x, v
+real(rprec), intent(in) :: xq
+real(rprec) :: vq
+integer :: i, N
+
+N = size(v)
+i = binary_search(x, xq)
+if (i == 0) then
+    vq = v(1)
+else if (i == N) then
+    vq = v(N)
+else
+    vq = linear_interp_ss(v(i), v(i+1), x(i+1)-x(i), (xq - x(i)))
+end if
+
+end function linear_interp_sa_nocheck
+
+!*******************************************************************************
+function linear_interp_sa(x, v, xq) result(vq)
+!*******************************************************************************
+!
+!  This function performs linear interpolation from a set of points x
+!  with values v to a query point xq
+!
+!  Inputs:
+!  x            - array of sample points
+!  v            - array of values at sample points
+!  xq           - query point
+!
+implicit none
+real(rprec), dimension(:), intent(in) :: x, v
+real(rprec), intent(in) :: xq
+real(rprec) :: vq
+
+if ( size(v) /= size(x) ) then
+    write(*,*) "ERROR: linear_interp_sa_nocheck: "                             &
+    // "Arrays x and v must be the same size"
+    stop 9
+end if
+
+vq = linear_interp_sa_nocheck(x, v, xq)
+
+end function linear_interp_sa
+
+!*******************************************************************************
+function linear_interp_aa(x, v, xq) result(vq)
+!*******************************************************************************
+!
+!  This function performs linear interpolation from a set of points x
+!  with values v to an array of query points xq
+!
+!  Inputs:
+!  x  - array of sample points
+!  v  - array of values at sample points
+!  xq - array of query points
+!
+implicit none
+real(rprec), dimension(:), intent(in) :: x, v
+real(rprec), dimension(:), intent(in) :: xq
+real(rprec), dimension(:), allocatable :: vq
+integer :: i, N
+
+! Check array sizes
+if ( size(v) /= size(x) ) then
+    write(*,*) "ERROR: linear_interp_aa: Arrays x and v must be the same size"
+    stop 9
+end if
+
+! Allocate output
+N = size(xq)
+allocate(vq(N))
+
+! For each element of the array perform interpolation
+do i = 1, N
+    vq(i) = linear_interp_sa_nocheck(x, v, xq(i))
+end do
+
+end function linear_interp_aa
+
+
+!*******************************************************************************
+real(rprec) function bilinear_interp_ss(u11,u21,u12,u22,dx,dy,xdiff,ydiff)
+!*******************************************************************************
+!
+!  This function performs linear interpolation
+!
+!  Inputs:
+!  u11   - lower bound value in x direction for lower y
+!  u21   - upper bound value in x direction for lower y
+!  u12   - lower bound value in x direction for upper y
+!  u22   - upper bound value in x direction for upper y
+!  dx    - length delta for the grid in x direction
+!  dy    - length delta for the grid in y direction
+!  xdiff - distance from the point of interest to the u11 node in x direction
+!  ydiff - distance from the point of interest to the u11 node in y direction
+!
+implicit none
+
+real(rprec), intent(in) :: u11, u12, u21, u22, dx, dy, xdiff, ydiff
+real(rprec) :: v1, v2
+
+v1 = linear_interp(u11, u21, dx, xdiff)
+v2 = linear_interp(u12, u22, dx, xdiff)
+
+bilinear_interp_ss = linear_interp(v1,v2,dy,ydiff)
+
+end function bilinear_interp_ss
+
+!*******************************************************************************
+function bilinear_interp_sa_nocheck(x, y, v, xq, yq) result(vq)
+!*******************************************************************************
+!
+!  This function performs the linear interpolation for bilinear_interp_sa
+!  and bilinear_interp_aa without checking bounds of the input arrays.
+!  It cannot be called directly.
+!
+implicit none
+real(rprec), dimension(:), intent(in) :: x, y
+real(rprec), dimension(:,:), intent(in) :: v
+real(rprec), intent(in) :: xq, yq
+real(rprec) :: vq
+integer     :: i, j, Nx, Ny
+
+Nx = size(x)
+Ny = size(y)
+i = binary_search(x, xq)
+if (i == 0) then
+    vq = linear_interp(y, v(1,:), yq)
+else if (i == Nx) then
+    vq = linear_interp(y, v(Nx,:), yq)
+else
+    j = binary_search(y, yq)
+    if (j == 0) then
+        vq = linear_interp(v(i,1), v(i+1,1), x(i+1)-x(i), xq - x(i))
+    else if (j == Ny) then
+        vq = linear_interp(v(i,Ny), v(i+1,Ny), x(i+1)-x(i), xq - x(i))
+    else
+        vq = bilinear_interp_ss( v(i,j), v(i+1,j), v(i,j+1), v(i+1,j+1), &
+             x(i+1) - x(i), y(j+1) - y(j), xq - x(i), yq - y(j) )
+    end if
+end if
+
+end function bilinear_interp_sa_nocheck
+
+!*******************************************************************************
+function bilinear_interp_sa(x, y, v, xq, yq) result(vq)
+!*******************************************************************************
+!
+!  This function performs linear interpolation from a set of points
+!  defined on a grid (x,y) with values v to a query point (xq, yq)
+!
+!  Inputs:
+!  x  - array of sample points
+!  v  - array of values at sample points
+!  xq - query point
+!
+implicit none
+real(rprec), dimension(:), intent(in) :: x, y
+real(rprec), dimension(:,:), intent(in) :: v
+real(rprec), intent(in) :: xq, yq
+real(rprec) :: vq
+
+if ( size(v,1) /= size(x) .or. size(v,2) /= size(y)) then
+     write(*,*) "ERROR: bilinear_interp_saa: Array v must have a size of "     &
+     // "[size(x), size(y)]"
+     stop 9
+end if
+
+vq = bilinear_interp_sa_nocheck(x, y, v, xq, yq)
+
+end function bilinear_interp_sa
+
+!*******************************************************************************
+function bilinear_interp_aa(x, y, v, xq, yq) result(vq)
+!*******************************************************************************
+!
+!  This function performs linear interpolation from a set of points
+!  defined on a grid (x,y) with values v to an array of query points
+!  (xq, yq)
+!
+!  Inputs:
+!  x  - array of sample points
+!  v  - array of values at sample points
+!  xq - array of query points
+!
+implicit none
+real(rprec), dimension(:), intent(in) :: x, y
+real(rprec), dimension(:,:), intent(in) :: v
+real(rprec), dimension(:), intent(in) :: xq, yq
+real(rprec), dimension(:), allocatable :: vq
+integer :: i, N
+
+if ( size(v,1) /= size(x) .or. size(v,2) /= size(y)) then
+    write(*,*) "ERROR:  bilinear_interp_aa: Array v must have a size of [size(x), size(y)]"
+    stop 9
+end if
+if ( size(xq) /= size(yq) ) then
+    write(*,*) "ERROR:  bilinear_interp_aa: Arrays xq and yq must be the same size"
+    stop 9
+end if
+
+N = size(xq)
+allocate(vq(N))
+
+do i = 1, N
+    vq(i) = bilinear_interp_sa_nocheck(x, y, v, xq(i), yq(i))
+end do
+
+end function bilinear_interp_aa
 
 !*******************************************************************************
 function integer_s(cstar) result(i)
@@ -254,7 +505,7 @@ end function uppercase
 !*******************************************************************************
 function lowercase(str) result(lcstr)
 !*******************************************************************************
-! Cconvert specified string to lower case. Values inside quotation marks are
+! Convert specified string to lower case. Values inside quotation marks are
 ! ignored
 character(*):: str
 character(len_trim(str)):: lcstr
@@ -288,7 +539,6 @@ do i = 1, ilen
 end do
 
 end function lowercase
-
 
 !*******************************************************************************
 function binary_search(arr, val) result(low)
@@ -340,7 +590,6 @@ do while (high - low > 1)
 end do
 
 end function binary_search
-
 
 !*******************************************************************************
 function count_lines(fname) result(N)

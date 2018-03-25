@@ -22,7 +22,7 @@ use stl
 implicit none
 
 private
-public softplus, logistic, gaussian
+public softplus, logistic, gaussian, rosenbrock
 
 interface softplus
     module procedure :: softplus_scalar
@@ -46,9 +46,9 @@ function softplus_scalar(s, x) result(sp)
 !*******************************************************************************
 ! softplus function of the form sp(x) = ln(1 + exp(x-s)) with scalar input
 implicit none
-real(rprec), intent(in)     :: x, s
-real(rprec)                 :: sp
-real(rprec), parameter      :: threshold = 100
+real(rprec), intent(in) :: x, s
+real(rprec) :: sp
+real(rprec), parameter :: threshold = 100
 
 if (x - s > threshold) then
     sp = x - s
@@ -58,16 +58,15 @@ endif
 
 end function softplus_scalar
 
-
 !*******************************************************************************
 function softplus_array(s, x) result(sp)
 !*******************************************************************************
 ! softplus function of the form ln(1 + exp(x-s)) with array input
 implicit none
 real(rprec), dimension(:), intent(in)   :: x
-real(rprec), intent(in)                 :: s
+real(rprec), intent(in) :: s
 real(rprec), dimension(:), allocatable  :: sp
-integer                                 :: i
+integer :: i
 
 allocate( sp(size(x)) )
 do i = 1, size(x)
@@ -81,9 +80,9 @@ function logistic_scalar (s, x) result(l)
 !*******************************************************************************
 ! logistic function of the form 1/(1 + exp(-(x-s)) with scalar input
 implicit none
-real(rprec), intent(in)     :: x, s
-real(rprec)                 :: l
-real(rprec), parameter      :: threshold = 100
+real(rprec), intent(in) :: x, s
+real(rprec) :: l
+real(rprec), parameter :: threshold = 100
 
 if (x - s > threshold) then
     l = 1.0
@@ -98,10 +97,10 @@ function logistic_array(s, x) result(l)
 !*******************************************************************************
 ! logistic function of the form 1/(1 + exp(-(x-s)) with array input
 implicit none
-real(rprec), dimension(:), intent(in)   :: x
-real(rprec), intent(in)                 :: s
-real(rprec), dimension(:), allocatable  :: l
-integer                                 :: i
+real(rprec), dimension(:), intent(in) :: x
+real(rprec), intent(in) :: s
+real(rprec), dimension(:), allocatable :: l
+integer :: i
 
 allocate( l(size(x)) )
 do i = 1, size(x)
@@ -110,14 +109,13 @@ end do
 
 end function logistic_array
 
-
 !*******************************************************************************
 function gaussian_scalar(x, x0, Delta) result(g)
 !*******************************************************************************
 ! normalized Gaussian with scalar input
 implicit none
 real(rprec), intent(in) :: x, x0, Delta
-real(rprec)             :: g
+real(rprec) :: g
 
 g = 1.0 / (Delta * sqrt(2.0 *pi)) * exp(-0.5 * (x - x0) * (x - x0) / Delta / Delta);
 ! If near precision limit, set to zero
@@ -126,16 +124,31 @@ if (abs(g) < sqrt(epsilon(g))) g = 0.0
 
 end function gaussian_scalar
 
-
 !*******************************************************************************
 function gaussian_array(x, x0, Delta) result(g)
 !*******************************************************************************
 ! normalized Gaussian with array input
 implicit none
-real(rprec), dimension(:), intent(in)   :: x
-real(rprec), intent(in)                 :: x0, Delta
-real(rprec), dimension(:), allocatable  :: g
-integer                                 :: i
+real(rprec), dimension(:), intent(in) :: x
+real(rprec), intent(in) :: x0, Delta
+real(rprec), dimension(:), allocatable :: g
+integer :: i
+
+allocate( g(size(x)) )
+do i = 1, size(x)
+    g(i) = gaussian(x(i), x0, Delta)
+end do
+
+end function gaussian_array
+
+!*******************************************************************************
+function rosenbrock(x, y) result(f)
+!*******************************************************************************
+! Rosenbrock function f(x,y) = (1-x)^2 + 100*(y-x^2)^2
+implicit none
+real(rprec), dimension(:), intent(in) :: x, y
+real(rprec) :: f
+integer :: i
 
 allocate( g(size(x)) )
 do i = 1, size(x)
