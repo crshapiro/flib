@@ -28,4 +28,4 @@ These functions convert from class(*) to intrinsic types. For example *i* = **in
 ## Function library (functions.f90)
 * *sp* = **softplus**(*s*,*x*) Softplus function sp(x) = ln(1 + exp(x-s)) that accepts scalar or vector values of *x*.
 * *l* = **logistic**(*s*, *x*) Logistic function l(x) 1/(1 + exp(-(x-s)) that accepts scalar of vector values of *x*.
-* *g* = **gaussian**(*x*, *x0*, *Delta*) Normalized Gaussain function g(x) = (Delta sqrt(2*pi))^-1 * exp( (x-x0)^2/(2*Delta^2) ) that accepts scalar or vector values of *x*.
+* *g* = **gaussian**(*x*, *x0*, *Delta*) Normalized Gaussain function g(x) = (Delta sqrt(2\*pi))^(-1) \* exp( (x-x0)^2/(2\*Delta^2) ) that accepts scalar or vector values of *x*.
