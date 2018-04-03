@@ -39,6 +39,11 @@ interface gaussian
     module procedure :: gaussian_array
 end interface gaussian
 
+interface rosenbrock
+    module procedure :: rosenbrock_scalar
+    module procedure :: rosenbrock_array
+end interface rosenbrock
+
 contains
 
 !*******************************************************************************
@@ -78,7 +83,7 @@ end function softplus_array
 !*******************************************************************************
 function logistic_scalar (s, x) result(l)
 !*******************************************************************************
-! logistic function of the form 1/(1 + exp(-(x-s)) with scalar input
+! logistic function of the form l(x) = 1/(1 + exp(-(x-s)) with scalar input
 implicit none
 real(rprec), intent(in) :: x, s
 real(rprec) :: l
@@ -95,7 +100,7 @@ end function logistic_scalar
 !*******************************************************************************
 function logistic_array(s, x) result(l)
 !*******************************************************************************
-! logistic function of the form 1/(1 + exp(-(x-s)) with array input
+! logistic function of the form l(x) = 1/(1 + exp(-(x-s)) with array input
 implicit none
 real(rprec), dimension(:), intent(in) :: x
 real(rprec), intent(in) :: s
@@ -142,19 +147,66 @@ end do
 end function gaussian_array
 
 !*******************************************************************************
-function rosenbrock(x, y) result(f)
+function rosenbrock_scalar(x, y, i_a, i_b) result(f)
 !*******************************************************************************
-! Rosenbrock function f(x,y) = (1-x)^2 + 100*(y-x^2)^2
+! Rosenbrock function f(x,y) = (a-x)^2 + b*(y-x^2)^2 with scalar input
+! Default values are a=1 and b=100
+implicit none
+real(rprec), intent(in) :: x, y
+real(rprec), intent(in), optional :: i_a, i_b
+real(rprec) :: f
+real(rprec) :: a, b
+
+if (present(i_a)) then
+    a = i_a
+else
+    a = 1._rprec
+end if
+
+if (present(i_b)) then
+    b = i_b
+else
+    b = 100._rprec
+end if
+
+f = (a-x)**2 + b*(y-x**2)**2
+
+end function rosenbrock_scalar
+
+!*******************************************************************************
+function rosenbrock_array(x, y, i_a, i_b) result(f)
+!*******************************************************************************
+! Rosenbrock function f(x,y) = (a-x)^2 + b*(y-x^2)^2 with array input
 implicit none
 real(rprec), dimension(:), intent(in) :: x, y
-real(rprec) :: f
-integer :: i
+real(rprec), intent(in), optional :: i_a, i_b
+real(rprec), dimension(:), allocatable :: f
+real(rprec) :: a, b
 
-allocate( g(size(x)) )
-do i = 1, size(x)
-    g(i) = gaussian(x(i), x0, Delta)
-end do
+! Check size and allocate
+if (size(x) .ne. size(y)) then
+    write(*,*) "ERROR: rosenbrock: x and y must be the same size"
+    stop 9
+end if
+allocate( f(size(x)) )
 
-end function gaussian_array
+! Call scalar function, depending on how many optional arguments are included
+if (present(i_a)) then
+    if (present(i_b)) then
+        do i = 1, size(x)
+            f(i) = rosenbrock(x(i), y(i), i_a, i_b)
+        end do
+    else
+        do i = 1, size(x)
+            f(i) = rosenbrock(x(i), y(i), i_a)
+        end do
+    end if
+else
+    do i = 1, size(x)
+        f(i) = rosenbrock(x(i), y(i))
+    end do
+end if
+
+end function rosenbrock_array
 
 end module functions
