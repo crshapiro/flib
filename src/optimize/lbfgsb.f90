@@ -1,21 +1,19 @@
-!!
-!!  Copyright (C) 2016  Johns Hopkins University
-!!
-!!  This file is part of lesgo.
-!!
-!!  lesgo is free software: you can redistribute it and/or modify
-!!  it under the terms of the GNU General Public License as published by
-!!  the Free Software Foundation, either version 3 of the License, or
-!!  (at your option) any later version.
-!!
-!!  lesgo is distributed in the hope that it will be useful,
-!!  but WITHOUT ANY WARRANTY; without even the implied warranty of
-!!  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-!!  GNU General Public License for more details.
-!!
-!!  You should have received a copy of the GNU General Public License
-!!  along with lesgo.  If not, see <http://www.gnu.org/licenses/>.
-!!
+!   Copyright (C) 2017-2018 Carl Shapiro
+!
+!   This file is part of flib.
+!
+!   flib is free software: you can redistribute it and/or modify
+!   it under the terms of the GNU General Public License as published by
+!   the Free Software Foundation, either version 3 of the License, or
+!   (at your option) any later version.
+!
+!   flib is distributed in the hope that it will be useful,
+!   but WITHOUT ANY WARRANTY; without even the implied warranty of
+!   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+!   GNU General Public License for more details.
+!
+!   You should have received a copy of the GNU General Public License
+!   along with flib.  If not, see <http://www.gnu.org/licenses/>.
 
 !*******************************************************************************
 module lbfgsb
@@ -117,28 +115,19 @@ this%ls = line_search_t(i_mini, .false., 1E-3_rprec, 0.9_rprec, 0.1_rprec)
 end function constructor
 
 !*******************************************************************************
-subroutine minimize(this, i_x, o_x)
+subroutine minimize(this, x)
 !*******************************************************************************
 implicit none
 class(lbfgsb_t), intent(inout) :: this
-real(rprec), dimension(:), intent(in) :: i_x
-real(rprec), dimension(:), intent(out), optional :: o_x
-real(rprec), dimension(:), allocatable :: x_work
+real(rprec), dimension(:), intent(inout) :: x
 integer :: n, m
 
 ! Set sizes of arrays
-n = size(i_x)
+n = size(x)
 m = 20
 
-! Allocate work array
-allocate(x_work(size(i_x)))
-x_work = i_x
-
 ! Call private method
-call this%minimize_priv(x_work, n, m)
-
-! Set output if present
-if ( present(o_x) ) o_x = x_work
+call this%minimize_priv(x, n, m)
 
 end subroutine minimize
 
@@ -278,9 +267,10 @@ info = 0
 
 ! Check the input arguments for errors.
 call errclb(n,m,factr,l,u,nbd,task,info,k)
-if (task(1:5) .eq. 'ERROR') write(*,*) "lbfgsb_t%minimize: "               &
-    // "routine detected an error"
-return
+if (task(1:5) .eq. 'ERROR') then
+    write(*,*) "lbfgsb_t%minimize: " // "routine detected an error"
+    return
+end if
 
 ! Initialize iwhere & project x onto the feasible set.
 call active(n,l,u,nbd,x,iwhere,iprint,prjctd,cnstnd,boxed)

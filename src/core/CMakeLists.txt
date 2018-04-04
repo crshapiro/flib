@@ -1,0 +1,1 @@
+add_library(core functions.f90 stl.f90 list.f90)

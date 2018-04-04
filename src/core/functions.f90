@@ -1,4 +1,4 @@
-!   Copyright (C) 2017 Carl Shapiro
+!   Copyright (C) 2017-2018 Carl Shapiro
 !
 !   This file is part of flib.
 !
@@ -182,6 +182,7 @@ real(rprec), dimension(:), intent(in) :: x, y
 real(rprec), intent(in), optional :: i_a, i_b
 real(rprec), dimension(:), allocatable :: f
 real(rprec) :: a, b
+integer :: i
 
 ! Check size and allocate
 if (size(x) .ne. size(y)) then
