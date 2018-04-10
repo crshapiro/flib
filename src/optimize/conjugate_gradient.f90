@@ -18,14 +18,17 @@
 !*******************************************************************************
 module conjugate_gradient
 !*******************************************************************************
+! This module minimizes a function using the Polak-Ribiere conjugate gradient
+! algorithm.
+!
 use stl
 use line_search
 use minimize
 implicit none
 
 private
-public conjugate_gradient_t
 
+public :: conjugate_gradient_t
 type :: conjugate_gradient_t
     class(minimize_t), pointer :: mini => NULL()
     ! A small number
@@ -70,7 +73,9 @@ contains
 !*******************************************************************************
 function constructor(i_mini, i_maxiter, i_lb, i_ub, i_tol) result(this)
 !*******************************************************************************
-implicit none
+! Constructor for conjugate gradient that takes as an argument a pointer to a
+! minimize_t
+!
 type(conjugate_gradient_t) :: this
 class(minimize_t), target :: i_mini
 integer, intent(in), optional :: i_maxiter
@@ -96,7 +101,8 @@ end function constructor
 !*******************************************************************************
 subroutine evaluate_gamma(this)
 !*******************************************************************************
-implicit none
+! Calculate the gamma value for the search direction. Uses Polak_Ribiere.
+!
 class(conjugate_gradient_t), intent(inout) :: this
 
 this%gd = this%g - this%gp
@@ -107,7 +113,8 @@ end subroutine evaluate_gamma
 !*******************************************************************************
 subroutine minimize(this, x)
 !*******************************************************************************
-implicit none
+! Minimize the function and return the result in the array x
+!
 class(conjugate_gradient_t), intent(inout) :: this
 real(rprec), dimension(:), intent(inout) :: x
 real(rprec) :: d, delta_f, stp

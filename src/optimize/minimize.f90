@@ -18,12 +18,22 @@
 !*******************************************************************************
 module minimize
 !*******************************************************************************
+! minimize_t is a base class for use with univariate or multivariate
+! minimization routines. This class can be used as a wrapper for procedures or
+! a base class for other types.
+!
+! If used as a function wrapper, the function must match the interface
+! minimize_function This interface must evaluate the function at x and return
+! the function value f and gradient g at this location.
+!
+! If used as a base class, the class method eval must be overridden.
+!
 use stl
 implicit none
 
 private
-public minimize_t
 
+public :: minimize_t
 type :: minimize_t
     ! pointer to function to minimize. Not used if extending this base class
     procedure(minimize_function), pointer, nopass :: fun => NULL()
@@ -36,9 +46,6 @@ interface minimize_t
     module procedure :: constructor
 end interface minimize_t
 
-! Interface for the scalar-valued function to be minimize_t. This interface
-! must evaluate the function at x and return the function value f and gradient g
-! at this location.
 abstract interface
     subroutine minimize_function(x, f, g)
         use stl
@@ -57,7 +64,7 @@ function constructor(i_fun) result(this)
 ! Constructor for minimize_t class. This constructor takes a procedure pointer
 ! matching the minimize_function interface. This constructor can be overloaded
 ! for a class that extends this base class.
-implicit none
+!
 procedure(minimize_function) :: i_fun
 type(minimize_t) :: this
 
@@ -70,7 +77,7 @@ subroutine eval(this, x, f, g)
 !*******************************************************************************
 ! Evaluates the function pointer. Overload this procedure if extending this base
 ! class
-implicit none
+!
 class(minimize_t), intent(inout) :: this
 real(rprec), dimension(:), intent(in) :: x
 real(rprec), intent(inout) :: f

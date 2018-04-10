@@ -19,6 +19,7 @@
 module lbfgsb
 !*******************************************************************************
 ! This module minimizes a function using the L-BFGS-B algorithm.
+!
 ! This is a converted version of the original F77 source code published under
 ! the New BSD license by Jorge Nocedal and Jose Luis Morales. The original
 ! license header is shown below. Please read attached file lbfgsb_license.txt
@@ -63,8 +64,8 @@ use minimize
 use line_search
 
 private
-public lbfgsb_t
 
+public :: lbfgsb_t
 type :: lbfgsb_t
     ! Pointer to a minimize class
     class(minimize_t), pointer :: mini => NULL()
@@ -92,7 +93,8 @@ contains
 !*******************************************************************************
 function constructor(i_mini, i_maxiteri, i_lb, i_ub, i_tol) result(this)
 !*******************************************************************************
-implicit none
+! Constructor for L-BFGS-B that takes as an argument a pointer to a minimize_t
+!
 type(lbfgsb_t) :: this
 class(minimize_t), target :: i_mini
 integer, intent(in), optional :: i_maxiteri
@@ -117,7 +119,8 @@ end function constructor
 !*******************************************************************************
 subroutine minimize(this, x)
 !*******************************************************************************
-implicit none
+! Minimize the function and return the result in the array x
+!
 class(lbfgsb_t), intent(inout) :: this
 real(rprec), dimension(:), intent(inout) :: x
 integer :: n, m
@@ -174,7 +177,7 @@ subroutine minimize_priv(this, x, n, m)
 !    iprint>100  print details of every iteration including x and g;
 !   When iprint > 0, the file iteriate.dat will be created to
 !                    summarize the iteration.
-implicit none
+!
 class(lbfgsb_t), intent(inout) :: this
 integer, intent(in) :: n, m
 real(rprec), dimension(n), intent(inout) :: x
@@ -192,13 +195,13 @@ real(rprec), dimension(m, m) :: ss, wt
 real(rprec), dimension(2*m, 2*m) :: wn, snd
 real(rprec), dimension(n) :: z, r, d, t, xp
 integer, dimension(n) :: index, iwhere, indx2
-logical :: prjctd,cnstnd,boxed,updatd,wrk
+logical :: prjctd, cnstnd, boxed, updatd, wrk
 character*3 :: word
-integer :: i,k,nintol,iback,nskip,head,col,iter,itail,iupdat
-integer :: nseg,nfgv,info,ifun,iword,nfree,nact,ileave,nenter
-real(rprec) :: theta,fold,ddot,dr,rr,tol,xstep,sbgnrm,ddum,dnorm,dtd,epsmch
-real(rprec) :: cpu1,cpu2,cachyt,sbtime,lnscht,time1,time2,gd,gdold,stp,stpmx,time
-real(rprec) :: a1,a2
+integer :: i, k, nintol, iback, nskip, head, col, iter, itail, iupdat
+integer :: nseg, nfgv, info, ifun, iword, nfree, nact, ileave, nenter
+real(rprec) :: theta, fold, ddot, dr, rr, tol, xstep, sbgnrm, ddum, dnorm, dtd
+real(rprec) :: epsmch, cpu1, cpu2, cachyt, sbtime, lnscht, time1, time2, gd
+real(rprec) :: gdold, stp, stpmx, time, a1, a2
 real(rprec), parameter :: big = 1.0E10_rprec
 integer :: dummy
 
@@ -605,7 +608,7 @@ subroutine dpofa(a,lda,n,info)
 !
 ! linpack.  this version dated 08/14/78 .
 ! cleve moler, university of new mexico, argonne national lab.
-implicit none
+!
 integer lda,n,info
 double precision a(lda,*)
 double precision ddot,t
@@ -682,7 +685,7 @@ subroutine dtrsl(t,ldt,n,b,job,info)
 !
 ! linpack. this version dated 08/14/78 .
 ! g. w. stewart, university of maryland, argonne national lab.
-implicit none
+!
 integer ldt,n,job,info
 double precision t(ldt,*),b(*)
 double precision ddot,temp
@@ -756,14 +759,12 @@ subroutine active(n, l, u, nbd, x, iwhere, iprint, prjctd, cnstnd, boxed)
 !                     3   if l(i)=u(i)
 !                     0   otherwise.
 !   In cauchy, iwhere is given finer gradations.
-implicit none
+!
 logical          prjctd, cnstnd, boxed
 integer          n, iprint, nbd(n), iwhere(n)
 double precision x(n), l(n), u(n)
-integer          nbdd,i
-! double precision 0.0d0
-! parameter        (0.0d0=0.0d0)
-! Initialize nbdd, prjctd, cnstnd and boxed.
+integer          nbdd, i
+
 nbdd = 0
 prjctd = .false.
 cnstnd = .false.
@@ -856,10 +857,10 @@ subroutine bmv(m, sy, wt, col, v, p, info)
 !   On exit info = 0       for normal return,
 !                = nonzero for abnormal return when the system
 !                            to be solved by dtrsl is singular.
-implicit none
+!
 integer m, col, info
 double precision sy(m, m), wt(m, m), v(2*col), p(2*col)
-integer :: i,k,i2
+integer :: i, k, i2
 double precision :: sum
 
 if (col .eq. 0) return
@@ -1050,15 +1051,15 @@ subroutine cauchy(n, x, l, u, nbd, g, iorder, iwhere, t, d, xcp, m, wy, ws, sy,&
 !   On exit info = 0       for normal return,
 !                = nonzero for abnormal return when the the system
 !                          used in routine bmv is singular.
-implicit none
+!
 integer :: n, m, head, col, nseg, iprint, info, nbd(n), iorder(n), iwhere(n)
 double precision :: theta, epsmch, x(n), l(n), u(n), g(n), t(n), d(n), xcp(n)
 double precision :: wy(n, col), ws(n, col), sy(m, m)
 double precision :: wt(m, m), p(2*m), c(2*m), wbp(2*m), v(2*m)
-logical :: xlower,xupper,bnded
-integer :: i,j,col2,nfree,nbreak,pointr,ibp,nleft,ibkmin,iter
-double precision :: f1,f2,dt,dtm,tsum,dibp,zibp,dibp2,bkmin, tu,tl,wmc,wmp,wmw
-double precision :: ddot,tj,tj0,neggi,sbgnrm,f2_org
+logical :: xlower, xupper, bnded
+integer :: i, j, col2, nfree, nbreak, pointr, ibp, nleft, ibkmin, iter
+double precision :: f1, f2, dt, dtm, tsum, dibp, zibp, dibp2, bkmin, tu, tl
+double precision :: wmc, wmp, wmw, ddot, tj, tj0, neggi, sbgnrm, f2_org
 logical :: iterate = .true., finish_loop = .true.
 
 ! initialize to prevent warning at compile time
@@ -1340,10 +1341,10 @@ subroutine formt(m, wt, sy, ss, col, theta, info)
 !     T = theta*SS + L*D^(-1)*L', stores T in the upper triangle
 !     of the array wt, and performs the Cholesky factorization of T
 !     to produce J*J', with J' stored in the upper triangle of wt.
-implicit none
+!
 integer :: m, col, info
 double precision :: theta, wt(m, m), sy(m, m), ss(m, m)
-integer :: i,j,k,k1
+integer :: i, j, k, k1
 double precision ddum
 
 ! Form the upper half of  T = theta*SS + L*D^(-1)*L',
@@ -1395,7 +1396,7 @@ subroutine freev(n, nfree, index, nenter, ileave, indx2,iwhere, wrk, updatd,   &
 !    have changed status since the previous iteration.
 ! For i= 1,...,nenter, indx2(i) have changed from bound to free.
 ! For i= ileave+1,...,n, indx2(i) have changed from free to bound.
-implicit none
+!
 integer :: n, nfree, nenter, ileave, iprint, iter, index(n), indx2(n), iwhere(n)
 logical :: wrk, updatd, cnstnd
 integer :: iact,i,k
@@ -1471,7 +1472,7 @@ subroutine hpsolb(n, t, iorder, iheap)
 !
 ! References:
 !   Algorithm 232 of CACM (J. W. J. Williams): HEAPSORT.
-implicit none
+!
 integer :: iheap, n, iorder(n)
 double precision :: t(n)
 integer :: i,j,k,indxin,indxou
@@ -1540,7 +1541,7 @@ end subroutine hpsolb
 subroutine errclb(n, m, factr, l, u, nbd, task, info, k)
 !*******************************************************************************
 ! This subroutine checks the validity of the input data.
-implicit none
+!
 character*60 :: task
 integer :: n, m, info, k, nbd(n)
 double precision :: factr, l(n), u(n)
@@ -1577,7 +1578,7 @@ subroutine cmprlb(n, m, x, g, ws, wy, sy, wt, z, r, wa, index,                 &
 !*******************************************************************************
 !   This subroutine computes r=-Z'B(xcp-xk)-Z'g by using
 !     wa(2m+1)=W'(xcp-x) from subroutine cauchy.
-implicit none
+!
 logical :: cnstnd
 integer :: n, m, col, head, nfree, info, index(n)
 double precision :: theta, x(n), g(n), z(n), r(n), wa(4*m)
@@ -1617,8 +1618,8 @@ end subroutine cmprlb
 subroutine projgr(n, l, u, nbd, x, g, sbgnrm)
 !*******************************************************************************
 ! This subroutine computes the infinity norm of the projected
-!   gradient.
-implicit none
+! gradient.
+!
 integer :: n, nbd(n)
 double precision :: sbgnrm, x(n), l(n), u(n), g(n)
 integer :: i
@@ -1645,11 +1646,11 @@ subroutine matupd(n, m, ws, wy, sy, ss, d, r, itail, iupdat, col, head, theta, &
 !*******************************************************************************
 !   This subroutine updates matrices WS and WY, and forms the
 !     middle matrix in B.
-implicit none
+!
 integer          n, m, itail, iupdat, col, head
 double precision theta, rr, dr, stp, dtd, d(n), r(n)
 double precision ws(n, m), wy(n, m), sy(m, m), ss(m, m)
-integer          j,pointr
+integer          j, pointr
 double precision ddot
 
 ! Set pointers for matrices WS and WY.
@@ -1829,14 +1830,14 @@ subroutine subsm (n, m, nsub, ind, l, u, nbd, x, d, xp, ws, wy, theta, xx, gg, &
 !   On exit info = 0       for normal return,
 !                = nonzero for abnormal return
 !                              when the matrix K is ill-conditioned.
-implicit none
+!
 integer          n, m, nsub, col, head, iword, iprint, info
 integer          ind(nsub), nbd(n)
 double precision theta
 double precision l(n), u(n), x(n), d(n), xp(n), xx(n), gg(n)
 double precision ws(n, m), wy(n, m)
 double precision wv(2*m), wn(2*m, 2*m)
-integer          pointr,m2,col2,ibd,jy,js,i,j,k
+integer          pointr, m2, col2, ibd, jy, js, i, j, k
 double precision alpha, xk, dk, temp1, temp2
 double precision dd_p
 
@@ -2071,7 +2072,7 @@ subroutine formk(n, nsub, ind, nenter, ileave, indx2, iupdat, updatd, wn, wn1, &
 !   On exit info =  0 for normal return;
 !                = -1 when the 1st Cholesky factorization failed;
 !                = -2 when the 2st Cholesky factorization failed.
-implicit none
+!
 integer :: n, nsub, m, col, head, nenter, ileave, iupdat
 integer :: info, ind(n), indx2(n)
 double precision :: theta, wn(2*m, 2*m), wn1(2*m, 2*m)
@@ -2259,6 +2260,5 @@ if (info .ne. 0) then
 endif
 
 end subroutine formk
-
 
 end module lbfgsb

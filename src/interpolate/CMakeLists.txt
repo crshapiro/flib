@@ -1,0 +1,2 @@
+add_library(interpolate interp1D.f90 linear_interpolator.f90 cubic_spline_interpolator.f90 pchip_interpolator.f90 interpolate.f90)
+target_link_libraries(interpolate core)

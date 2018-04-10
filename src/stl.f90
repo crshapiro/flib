@@ -18,6 +18,11 @@
 !*******************************************************************************
 module stl
 !*******************************************************************************
+! Standard library
+!
+! The standard library model **stl** contains wrappers, useful procedures, and
+! several defined constants
+!
 implicit none
 
 private
@@ -31,9 +36,9 @@ real(rprec), parameter, public :: pi = 4._rprec*datan(1._rprec)
 interface linear_interp
     module procedure :: linear_interp_ss
     module procedure :: linear_interp_sa
-    module procedure :: linear_interp_aa
 end interface linear_interp
 
+public :: bilinear_interp
 interface bilinear_interp
     module procedure :: bilinear_interp_ss
     module procedure :: bilinear_interp_sa
@@ -83,8 +88,6 @@ real(rprec) function linear_interp_ss(u1,u2,dx,xdiff)
 !  dx           - length delta for the grid in the correct direction
 !  xdiff        - distance from the point of interest to the u1 node
 !
-implicit none
-
 real(rprec), intent(in) :: u1, u2, dx, xdiff
 
 linear_interp_ss = u1 + (xdiff) * (u2 - u1) / dx
@@ -99,7 +102,6 @@ function linear_interp_sa_nocheck(x, v, xq) result(vq)
 !  and linear_interp_aa without checking bounds of the input arrays.
 !  It cannot be called directly.
 !
-implicit none
 real(rprec), dimension(:), intent(in) :: x, v
 real(rprec), intent(in) :: xq
 real(rprec) :: vq
@@ -129,7 +131,6 @@ function linear_interp_sa(x, v, xq) result(vq)
 !  v            - array of values at sample points
 !  xq           - query point
 !
-implicit none
 real(rprec), dimension(:), intent(in) :: x, v
 real(rprec), intent(in) :: xq
 real(rprec) :: vq
@@ -143,42 +144,6 @@ end if
 vq = linear_interp_sa_nocheck(x, v, xq)
 
 end function linear_interp_sa
-
-!*******************************************************************************
-function linear_interp_aa(x, v, xq) result(vq)
-!*******************************************************************************
-!
-!  This function performs linear interpolation from a set of points x
-!  with values v to an array of query points xq
-!
-!  Inputs:
-!  x  - array of sample points
-!  v  - array of values at sample points
-!  xq - array of query points
-!
-implicit none
-real(rprec), dimension(:), intent(in) :: x, v
-real(rprec), dimension(:), intent(in) :: xq
-real(rprec), dimension(:), allocatable :: vq
-integer :: i, N
-
-! Check array sizes
-if ( size(v) /= size(x) ) then
-    write(*,*) "ERROR: linear_interp_aa: Arrays x and v must be the same size"
-    stop 9
-end if
-
-! Allocate output
-N = size(xq)
-allocate(vq(N))
-
-! For each element of the array perform interpolation
-do i = 1, N
-    vq(i) = linear_interp_sa_nocheck(x, v, xq(i))
-end do
-
-end function linear_interp_aa
-
 
 !*******************************************************************************
 real(rprec) function bilinear_interp_ss(u11,u21,u12,u22,dx,dy,xdiff,ydiff)
@@ -196,8 +161,6 @@ real(rprec) function bilinear_interp_ss(u11,u21,u12,u22,dx,dy,xdiff,ydiff)
 !  xdiff - distance from the point of interest to the u11 node in x direction
 !  ydiff - distance from the point of interest to the u11 node in y direction
 !
-implicit none
-
 real(rprec), intent(in) :: u11, u12, u21, u22, dx, dy, xdiff, ydiff
 real(rprec) :: v1, v2
 
@@ -216,7 +179,6 @@ function bilinear_interp_sa_nocheck(x, y, v, xq, yq) result(vq)
 !  and bilinear_interp_aa without checking bounds of the input arrays.
 !  It cannot be called directly.
 !
-implicit none
 real(rprec), dimension(:), intent(in) :: x, y
 real(rprec), dimension(:,:), intent(in) :: v
 real(rprec), intent(in) :: xq, yq
@@ -256,7 +218,6 @@ function bilinear_interp_sa(x, y, v, xq, yq) result(vq)
 !  v  - array of values at sample points
 !  xq - query point
 !
-implicit none
 real(rprec), dimension(:), intent(in) :: x, y
 real(rprec), dimension(:,:), intent(in) :: v
 real(rprec), intent(in) :: xq, yq
@@ -285,7 +246,6 @@ function bilinear_interp_aa(x, y, v, xq, yq) result(vq)
 !  v  - array of values at sample points
 !  xq - array of query points
 !
-implicit none
 real(rprec), dimension(:), intent(in) :: x, y
 real(rprec), dimension(:,:), intent(in) :: v
 real(rprec), dimension(:), intent(in) :: xq, yq
@@ -314,7 +274,7 @@ end function bilinear_interp_aa
 function integer_s(cstar) result(i)
 !*******************************************************************************
 ! convert a class(*) scalar to an integer scalar
-implicit none
+!
 class(*), intent(in) :: cstar
 integer :: i
 
@@ -331,7 +291,7 @@ end function integer_s
 function integer_a(cstar) result(i)
 !*******************************************************************************
 ! convert a class(*) array to an integer array
-implicit none
+!
 class(*), dimension(:), intent(in) :: cstar
 integer, dimension(:), allocatable :: i
 
@@ -348,7 +308,7 @@ end function integer_a
 function real_s(cstar) result(r)
 !*******************************************************************************
 ! convert a class(*) scalar to a real scalar
-implicit none
+!
 class(*), intent(in) :: cstar
 real :: r
 
@@ -365,7 +325,7 @@ end function real_s
 function real_a(cstar) result(r)
 !*******************************************************************************
 ! convert a class(*) array to a real array
-implicit none
+!
 class(*), dimension(:), intent(in) :: cstar
 real, dimension(:), allocatable :: r
 
@@ -382,7 +342,7 @@ end function real_a
 function character_a(cstar) result(ch)
 !*******************************************************************************
 ! convert a class(*) array to a character array
-implicit none
+!
 class(*), intent(in) :: cstar
 character(:), allocatable :: ch
 
@@ -399,7 +359,7 @@ end function character_a
 function logical_s(cstar) result(l)
 !*******************************************************************************
 ! convert a class(*) scalar to a logical scalar
-implicit none
+!
 class(*), intent(in) :: cstar
 logical :: l
 
@@ -416,7 +376,7 @@ end function logical_s
 function logical_a(cstar) result(l)
 !*******************************************************************************
 ! convert a class(*) array to a logical array
-implicit none
+!
 class(*), dimension(:), intent(in) :: cstar
 logical, dimension(:), allocatable :: l
 
@@ -433,7 +393,7 @@ end function logical_a
 function complex_s(cstar) result(l)
 !*******************************************************************************
 ! convert a class(*) scalar to a complex scalar
-implicit none
+!
 class(*), intent(in) :: cstar
 complex :: l
 
@@ -450,7 +410,7 @@ end function complex_s
 function complex_a(cstar) result(l)
 !*******************************************************************************
 ! convert a class(*) array to complex array
-implicit none
+!
 class(*), dimension(:), intent(in) :: cstar
 complex, dimension(:), allocatable :: l
 
@@ -469,6 +429,7 @@ function uppercase(str) result(ucstr)
 !*******************************************************************************
 ! convert specified string to upper case. Values inside quotation marks are
 ! ignored
+!
 character(*):: str
 character(len_trim(str)):: ucstr
 integer :: i, ilen, iav, ioffset, iqc, iquote
@@ -507,6 +468,7 @@ function lowercase(str) result(lcstr)
 !*******************************************************************************
 ! Convert specified string to lower case. Values inside quotation marks are
 ! ignored
+!
 character(*):: str
 character(len_trim(str)):: lcstr
 integer :: i, ilen, iav, ioffset, iqc, iquote
@@ -555,8 +517,6 @@ function binary_search(arr, val) result(low)
 !  low          - lower index of the array bracket
 !                 0 if val < arr(1), N if val < arr(N))
 !
-implicit none
-
 real(rprec), dimension(:) :: arr
 real(rprec) :: val
 integer :: low, mid, high, N
@@ -595,7 +555,7 @@ end function binary_search
 function count_lines(fname) result(N)
 !*******************************************************************************
 ! Counts the number of lines in a file
-implicit none
+!
 character(*), intent(in) :: fname
 logical :: exst
 integer :: fid, ios

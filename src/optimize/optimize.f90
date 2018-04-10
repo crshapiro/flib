@@ -16,20 +16,38 @@
 !   along with flib.  If not, see <http://www.gnu.org/licenses/>.
 
 !*******************************************************************************
-program optimize
+module optimize
 !*******************************************************************************
-! Optimization unit test program
+! Optimization module. Contains the following classes:
+!   * minimize_t
+!   * line_search_t
+!   * lbfgsb_t
+!   * conjugate_gradient_t
+!
 use stl
 use functions
 use minimize
+use line_search
 use lbfgsb
 use conjugate_gradient
 implicit none
 
+contains
+
+!*******************************************************************************
+subroutine optimize_unit_test
+!*******************************************************************************
+! Optimization unit test program. Demonstrates the use of L-BFGS-B and conjugate
+! gradient to minimize the rosenbrock function. Both minimization methods use
+!
 type(minimize_t), target :: m
 type(lbfgsb_t) :: lb
 type(conjugate_gradient_t) :: cg
 real(rprec), dimension(:), allocatable :: x
+
+write(*,*) "*******************************************************************"
+write(*,*) " Optimize unit test"
+write(*,*) "*******************************************************************"
 
 ! Initial guess
 allocate( x(2) )
@@ -76,7 +94,6 @@ subroutine rosenbrock_wrapper(x, f, g)
 !*******************************************************************************
 ! Wrapper for Rosenbrock function that conforms to the minimize_function
 ! abstract interface
-implicit none
 
 real(rprec), dimension(:), intent(in) :: x      ! Point to evaluate
 real(rprec), intent(inout) :: f                 ! Function value (scalar)
@@ -91,7 +108,9 @@ f = rosenbrock(x(1), x(2))
 g(1) = -2*(1._rprec-x(1)) - 400._rprec*(x(2)-x(1)**2)*x(1)
 g(2) = 200._rprec*(x(2)-x(1)**2)
 
-end subroutine
+end subroutine rosenbrock_wrapper
 
-end program optimize
+end subroutine optimize_unit_test
+
+end module optimize
 

@@ -18,11 +18,12 @@
 !*******************************************************************************
 module list
 !*******************************************************************************
+! The list_t class is a doubly-linked list that contain any class type.
+! Each item is contained inside a node_t class object
+!
 use stl
 implicit none
-
 private
-public list_t
 
 type :: node_t
     type(node_t), pointer, private :: next => null()
@@ -36,6 +37,7 @@ interface node_t
     module procedure :: node_constructor
 end interface node_t
 
+public :: list_t
 type :: list_t
     type(node_t), pointer :: front => null()
     type(node_t), pointer :: back => null()
@@ -59,7 +61,8 @@ contains
 !*******************************************************************************
 function node_constructor(item, next, prev) result(this)
 !*******************************************************************************
-implicit none
+! Constructor for a node
+!
 class(*), intent(in) :: item
 type(node_t), intent(in), pointer, optional :: next, prev
 type(node_t) :: this
@@ -73,7 +76,8 @@ end function node_constructor
 !*******************************************************************************
 subroutine node_destructor(this)
 !*******************************************************************************
-implicit none
+! Destructor for a node
+!
 type(node_t) :: this
 
 if (allocated(this%item)) deallocate(this%item)
@@ -85,7 +89,8 @@ end subroutine node_destructor
 !*******************************************************************************
 function list_constructor() result(this)
 !*******************************************************************************
-implicit none
+! Constructor for the linked list
+!
 type(list_t) :: this
 
 end function list_constructor
@@ -93,7 +98,8 @@ end function list_constructor
 !*******************************************************************************
 subroutine list_destructor(this)
 !*******************************************************************************
-implicit none
+! Destructor for the linked list
+!
 type(list_t) :: this
 type(node_t), pointer :: next => null()
 
@@ -113,7 +119,8 @@ end subroutine list_destructor
 !*******************************************************************************
 subroutine push_front(this, item)
 !*******************************************************************************
-implicit none
+! Pushes item to the front of the list
+!
 class(list_t) :: this
 class(*), intent(in) :: item
 type(node_t), pointer :: front => null()
@@ -134,7 +141,8 @@ end subroutine push_front
 !*******************************************************************************
 function pop_front(this) result(item)
 !*******************************************************************************
-implicit none
+! Pushes item to the back of the list
+!
 class(list_t) :: this
 type(node_t), pointer :: front => null()
 class(*), allocatable :: item
@@ -159,7 +167,8 @@ end function pop_front
 !*******************************************************************************
 subroutine push_back(this, item)
 !*******************************************************************************
-implicit none
+! Pops item from the front of the list
+!
 class(list_t) :: this
 class(*), intent(in) :: item
 type(node_t), pointer :: back => null()
@@ -180,7 +189,8 @@ end subroutine push_back
 !*******************************************************************************
 function pop_back(this) result(item)
 !*******************************************************************************
-implicit none
+! Pops item from the back of the list
+!
 class(list_t) :: this
 type(node_t), pointer :: back => null()
 class(*), allocatable :: item
@@ -205,7 +215,8 @@ end function pop_back
 !*******************************************************************************
 subroutine insert(this, item, n)
 !*******************************************************************************
-implicit none
+! Inserts item into the nth location of the list
+!
 class(list_t) :: this
 class(*), intent(in) :: item
 integer, intent(in) :: n
@@ -252,7 +263,8 @@ end subroutine insert
 !*******************************************************************************
 function remove(this, n) result(item)
 !*******************************************************************************
-implicit none
+! Removes and returns the nth item from the list
+!
 class(list_t) :: this
 integer, intent(in) :: n
 class(*), allocatable :: item
@@ -307,7 +319,8 @@ end function remove
 !*******************************************************************************
 function size(this) result(n)
 !*******************************************************************************
-implicit none
+! Returns the number of items in the list
+!
 class(list_t) :: this
 type(node_t), pointer :: node => null()
 integer :: n

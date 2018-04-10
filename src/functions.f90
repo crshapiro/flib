@@ -18,27 +18,34 @@
 !*******************************************************************************
 module functions
 !*******************************************************************************
+! Function library
+!
+! The function library **functions** contains useful mathematical functions used
+! frequently in many contexts
+!
 use stl
 implicit none
-
 private
-public softplus, logistic, gaussian, rosenbrock
 
+public :: softplus
 interface softplus
     module procedure :: softplus_scalar
     module procedure :: softplus_array
 end interface softplus
 
+public :: logistic
 interface logistic
     module procedure :: logistic_scalar
     module procedure :: logistic_array
 end interface logistic
 
+public :: gaussian
 interface gaussian
     module procedure :: gaussian_scalar
     module procedure :: gaussian_array
 end interface gaussian
 
+public :: rosenbrock
 interface rosenbrock
     module procedure :: rosenbrock_scalar
     module procedure :: rosenbrock_array
@@ -50,7 +57,7 @@ contains
 function softplus_scalar(s, x) result(sp)
 !*******************************************************************************
 ! softplus function of the form sp(x) = ln(1 + exp(x-s)) with scalar input
-implicit none
+!
 real(rprec), intent(in) :: x, s
 real(rprec) :: sp
 real(rprec), parameter :: threshold = 100
@@ -67,7 +74,7 @@ end function softplus_scalar
 function softplus_array(s, x) result(sp)
 !*******************************************************************************
 ! softplus function of the form ln(1 + exp(x-s)) with array input
-implicit none
+!
 real(rprec), dimension(:), intent(in)   :: x
 real(rprec), intent(in) :: s
 real(rprec), dimension(:), allocatable  :: sp
@@ -84,7 +91,7 @@ end function softplus_array
 function logistic_scalar (s, x) result(l)
 !*******************************************************************************
 ! logistic function of the form l(x) = 1/(1 + exp(-(x-s)) with scalar input
-implicit none
+!
 real(rprec), intent(in) :: x, s
 real(rprec) :: l
 real(rprec), parameter :: threshold = 100
@@ -101,7 +108,7 @@ end function logistic_scalar
 function logistic_array(s, x) result(l)
 !*******************************************************************************
 ! logistic function of the form l(x) = 1/(1 + exp(-(x-s)) with array input
-implicit none
+!
 real(rprec), dimension(:), intent(in) :: x
 real(rprec), intent(in) :: s
 real(rprec), dimension(:), allocatable :: l
@@ -118,7 +125,7 @@ end function logistic_array
 function gaussian_scalar(x, x0, Delta) result(g)
 !*******************************************************************************
 ! normalized Gaussian with scalar input
-implicit none
+!
 real(rprec), intent(in) :: x, x0, Delta
 real(rprec) :: g
 
@@ -133,7 +140,7 @@ end function gaussian_scalar
 function gaussian_array(x, x0, Delta) result(g)
 !*******************************************************************************
 ! normalized Gaussian with array input
-implicit none
+!
 real(rprec), dimension(:), intent(in) :: x
 real(rprec), intent(in) :: x0, Delta
 real(rprec), dimension(:), allocatable :: g
@@ -151,7 +158,7 @@ function rosenbrock_scalar(x, y, i_a, i_b) result(f)
 !*******************************************************************************
 ! Rosenbrock function f(x,y) = (a-x)^2 + b*(y-x^2)^2 with scalar input
 ! Default values are a=1 and b=100
-implicit none
+!
 real(rprec), intent(in) :: x, y
 real(rprec), intent(in), optional :: i_a, i_b
 real(rprec) :: f
@@ -174,14 +181,13 @@ f = (a-x)**2 + b*(y-x**2)**2
 end function rosenbrock_scalar
 
 !*******************************************************************************
-function rosenbrock_array(x, y, i_a, i_b) result(f)
+function rosenbrock_array(x, y, a, b) result(f)
 !*******************************************************************************
 ! Rosenbrock function f(x,y) = (a-x)^2 + b*(y-x^2)^2 with array input
-implicit none
+!
 real(rprec), dimension(:), intent(in) :: x, y
-real(rprec), intent(in), optional :: i_a, i_b
+real(rprec), intent(in), optional :: a, b
 real(rprec), dimension(:), allocatable :: f
-real(rprec) :: a, b
 integer :: i
 
 ! Check size and allocate
@@ -192,14 +198,14 @@ end if
 allocate( f(size(x)) )
 
 ! Call scalar function, depending on how many optional arguments are included
-if (present(i_a)) then
-    if (present(i_b)) then
+if (present(a)) then
+    if (present(b)) then
         do i = 1, size(x)
-            f(i) = rosenbrock(x(i), y(i), i_a, i_b)
+            f(i) = rosenbrock(x(i), y(i), a, b)
         end do
     else
         do i = 1, size(x)
-            f(i) = rosenbrock(x(i), y(i), i_a)
+            f(i) = rosenbrock(x(i), y(i), a)
         end do
     end if
 else

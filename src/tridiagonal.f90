@@ -50,7 +50,7 @@ function constructor(i_a, i_b, i_c) result(this)
 !*******************************************************************************
 ! Constructor for tridiagonal_t that takes the three diagonal vectors are
 ! input arguments.
-implicit none
+!
 real(rprec), dimension(:), intent(in) :: i_a, i_b, i_c
 type(tridiagonal_t) :: this
 integer :: i
@@ -106,7 +106,7 @@ subroutine solve(this, d)
 !*******************************************************************************
 ! Solves the matrix equation when given the right hand side d. The answer is
 ! returned in the same input array.
-implicit none
+!
 class(tridiagonal_t) :: this
 real(rprec), dimension(:), intent(inout) :: d
 integer :: i

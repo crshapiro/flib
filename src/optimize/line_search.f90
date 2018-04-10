@@ -22,13 +22,14 @@ module line_search
 ! J.J. More and D.J. Thuente "Line Search Algorithms with Guaranteed Sufficient
 ! Decrease." ACM Trans. Math. Software, 20(3), 286--307, 1994. Original source
 ! code written in F77 at: http://ftp.mcs.anl.gov/pub/MINPACK-2/csrch/
+!
 use stl
 use minimize
 implicit none
 
 private
-public line_search_t
 
+public :: line_search_t
 type :: line_search_t
     ! Pointer to a minimize class
     class(minimize_t), pointer :: mini => NULL()
@@ -69,7 +70,9 @@ contains
 function constructor(i_mini, i_verbose, i_ftol, i_gtol, i_xtol, i_minStep,     &
     i_maxStep, i_maxFunEval) result(this)
 !*******************************************************************************
-implicit none
+! Constructor for line search that takes as an argument a pointer to a
+! minimize_t
+!
 type(line_search_t) :: this
 class(minimize_t), target :: i_mini
 logical, intent(in), optional :: i_verbose
@@ -106,7 +109,11 @@ end function constructor
 !*******************************************************************************
 subroutine search(this, x, f, g, s, stp, o_numFunEval)
 !*******************************************************************************
-implicit none
+! Perform inexact search starting at x, with known values of the function f(x),
+! first derivative g, and search direction s. An estimated step size is also
+! provided. On  exit, the search location x, value f(x), derivative g are
+! returned.
+!
 class(line_search_t), intent(inout) :: this
 real(rprec), dimension(:), intent(inout) :: x
 real(rprec), dimension(:), intent(inout) :: g
@@ -316,7 +323,8 @@ end subroutine search
 subroutine take_step(this, stx, fx, dx, sty, fy, dy, stp, fp, dp,              &
     take_step_success)
 !*******************************************************************************
-implicit none
+! Take a step. An internal function called from search.
+!
 class(line_search_t), intent(inout) :: this
 real(rprec), intent(inout) :: stx, fx, dx, sty, fy, dy, stp, fp, dp
 logical, intent(inout)     :: take_step_success

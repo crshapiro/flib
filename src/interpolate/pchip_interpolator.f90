@@ -1,4 +1,4 @@
-!   Copyright (C) 2017 Carl Shapiro
+!   Copyright (C) 2017-2018 Carl Shapiro
 !
 !   This file is part of flib.
 !
@@ -16,64 +16,123 @@
 !   along with flib.  If not, see <http://www.gnu.org/licenses/>.
 
 !*******************************************************************************
-module pchip
+module pchip_interpolator
 !*******************************************************************************
+! The pchip_t class performs linear interpolation for a 1D function v(x). The
+! evaluated data is passed on construction. Interpolation is evaluated for real
+! sample points xq passed as values or arrays. The first derivatives can also be
+! returned as optional arguments.
+!
+! The resulting interpolation has continuous values and first derivatives.
+! Within an interval, the interpolation is monotonic. Extrapolation is used by
+! default for evaluation points xq outside of the interval.
+!
+! For more details see: F. N. Fritsch and R. E. Carlson. (1980). "Monotone
+! piecewise cubic interpolation." SIAM Journal on Numerical Analysis. 17(2)
+! 238–-246.
+!
 use stl
+use interp1D
 implicit none
 
 private
-public pchip_t
+public :: pchip_interpolator_t, pchip_interpolate
 
-type :: pchip_t
-    real(rprec), dimension(:), allocatable :: x, v, vp
-    integer :: N
+type, extends(interp1D_t) :: pchip_interpolator_t
+    real(rprec), dimension(:), allocatable :: vp
 contains
+    procedure, public :: init_pchip_interpolator_t
     procedure, private :: interp_scalar
-    procedure, private :: interp_array
-    generic, public :: interp => interp_scalar, interp_array
-end type pchip_t
+end type pchip_interpolator_t
 
-interface pchip_t
+interface pchip_interpolator_t
     module procedure constructor
-end interface pchip_t
+end interface pchip_interpolator_t
+
+interface pchip_interpolate
+    module procedure :: pchip_interpolate_scalar
+    module procedure :: pchip_interpolate_array
+end interface pchip_interpolate
 
 contains
+
+!*******************************************************************************
+function pchip_interpolate_scalar(x, v, xq) result(vq)
+!*******************************************************************************
+! Convenience function interface for pchip_interpolate_t for a single scalar
+! query point xq.
+!
+real(rprec), dimension(:), intent(in) :: x, v
+real(rprec), intent(in) :: xq
+real(rprec) :: vq
+type(pchip_interpolator_t) :: sp
+
+! Create object
+sp = pchip_interpolator_t(x,v)
+
+! Interpolate
+vq = 0._rprec
+call sp%interpolate(xq, vq)
+
+end function pchip_interpolate_scalar
+
+!*******************************************************************************
+function pchip_interpolate_array(x, v, xq) result(vq)
+!*******************************************************************************
+! Convenience function interface for pchip_interpolate_t for an array of
+! query points xq.
+!
+real(rprec), dimension(:), intent(in) :: x, v
+real(rprec), dimension(:), intent(in) :: xq
+real(rprec), dimension(:), allocatable :: vq
+type(pchip_interpolator_t) :: sp
+
+! Create object
+sp = pchip_interpolator_t(x,v)
+
+! Interpolate
+allocate(vq(size(x)))
+call sp%interpolate(xq, vq)
+
+end function pchip_interpolate_array
 
 !*******************************************************************************
 function constructor(x, v) result(this)
 !*******************************************************************************
-implicit none
+! Constructor that calls initializer
+!
+type(pchip_interpolator_t) :: this
+real(rprec), dimension(:), intent(in) :: x, v
 
-type(pchip_t) :: this
+call this%init_pchip_interpolator_t(x, v)
+
+end function constructor
+
+!*******************************************************************************
+subroutine init_pchip_interpolator_t(this, x, v)
+!*******************************************************************************
+! Initializer for linear_interpolator_t. Takes points v(x) that are used
+! for the interpolation. This function also evaluates the second derivative as
+! these x's using the tridiagonal matrix algorithm.
+!
+! By default, the constructor using natural boundary conditions with vanishing
+! second derivatives. Other boundary conditions can be specified by supplying
+! the optional arguments low_bc or high_bc. The values of the specified
+! derivatives can be passed using the optional arguments low_f and high_f.
+!
+class(pchip_interpolator_t), intent(inout) :: this
 real(rprec), dimension(:), intent(in) :: x, v
 real(rprec), dimension(:), allocatable :: delta
 logical, dimension(:), allocatable :: zeroed
 real(rprec) :: a, b, tau
 integer :: i
 
-! Set the size of the matrix
-this%N = size(x)
+! Call base initializer
+call this%init_interp1D_t(x, v, 'extrapolate', 'extrapolate')
 
-! Check that all input arguments are the same size
-if ( size(v) /= this%N ) then
-    write(*,*) "ERROR: pchip_t%constructor: x and v must be the same size"
-    stop 9
-end if
-
-! Check that x is sorted
-do i = 2, this%N
-    if ( x(i) < x(i-1) ) then
-        write(*,*) "ERROR: pchip_t%constructor: x must be increasing"
-        stop 9
-    end if
-end do
-
-! Allocate and assign variables
-allocate( this%x(this%N) )
-allocate( this%v(this%N) )
+! Allocate and set vpp
+if ( allocated(this%vp) ) deallocate(this%vp)
 allocate( this%vp(this%N) )
-this%x = x
-this%v = v
 this%vp = 0._rprec
 
 ! Calculate secant lines between points
@@ -132,11 +191,7 @@ do i = 1, this%N-1
     end if
 end do
 
-! Cleanup
-deallocate(Delta)
-deallocate(zeroed)
-
-end function constructor
+end subroutine init_pchip_interpolator_t
 
 !*******************************************************************************
 subroutine interp_scalar(this, xq, vq, vqp)
@@ -144,9 +199,8 @@ subroutine interp_scalar(this, xq, vq, vqp)
 ! Perform interpolation for a single point. Uses binary_search to find the
 ! interval on which the sample point lies. This is a guaranteed log2(N) search
 ! method.
-implicit none
-
-class(pchip_t) :: this
+!
+class(pchip_interpolator_t) :: this
 real(rprec), intent(in) :: xq
 real(rprec), intent(out) :: vq
 real(rprec), intent(out), optional :: vqp
@@ -180,31 +234,4 @@ end if
 
 end subroutine interp_scalar
 
-!*******************************************************************************
-subroutine interp_array(this, xq, vq, vqp)
-!*******************************************************************************
-! Perform interpolation for an array of points. This simply calls interp_scalar
-! for each of the sample points.
-implicit none
-
-class(pchip_t) :: this
-real(rprec), dimension(:), intent(in) :: xq
-real(rprec), dimension(:), intent(out) :: vq
-real(rprec), dimension(:), intent(out), optional :: vqp
-integer :: i, N
-
-N = size(xq)
-
-if ( present(vqp) ) then
-    do i = 1, N
-        call this%interp(xq(i), vq(i), vqp(i))
-    end do
-else
-    do i = 1, N
-        call this%interp(xq(i), vq(i))
-    end do
-end if
-
-end subroutine interp_array
-
-end module pchip
+end module pchip_interpolator
